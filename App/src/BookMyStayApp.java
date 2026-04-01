@@ -1,84 +1,93 @@
-import java.util.HashMap;
+import java.util.*;
 
-abstract class Room {
+class Service {
+    private String serviceName;
+    private double cost;
 
-    protected String roomType;
-    protected double price;
-
-    public Room(String roomType, double price) {
-        this.roomType = roomType;
-        this.price = price;
+    public Service(String serviceName, double cost) {
+        this.serviceName = serviceName;
+        this.cost = cost;
     }
 
-    public void displayDetails() {
-        System.out.println("Room Type: " + roomType);
-        System.out.println("Price: ₹" + price);
+    public String getServiceName() {
+        return serviceName;
     }
-}
 
-class SingleRoom extends Room {
-    public SingleRoom() {
-        super("Single Room", 1500);
+    public double getCost() {
+        return cost;
     }
-}
 
-class DoubleRoom extends Room {
-    public DoubleRoom() {
-        super("Double Room", 2500);
+    @Override
+    public String toString() {
+        return serviceName + " (₹" + cost + ")";
     }
 }
 
-class SuiteRoom extends Room {
-    public SuiteRoom() {
-        super("Suite Room", 5000);
+class AddOnServiceManager {
+    private Map<String, List<Service>> serviceMap;
+
+    public AddOnServiceManager() {
+        serviceMap = new HashMap<>();
+    }
+
+    public void addService(String reservationId, Service service) {
+        serviceMap
+                .computeIfAbsent(reservationId, k -> new ArrayList<>())
+                .add(service);
+
+        System.out.println("Added service: " + service + " to Reservation ID: " + reservationId);
+    }
+
+    public void viewServices(String reservationId) {
+        List<Service> services = serviceMap.get(reservationId);
+
+        if (services == null || services.isEmpty()) {
+            System.out.println("No services for Reservation ID: " + reservationId);
+            return;
+        }
+
+        System.out.println("\nServices for Reservation ID: " + reservationId);
+        for (Service s : services) {
+            System.out.println(s);
+        }
+    }
+
+    public double calculateTotalCost(String reservationId) {
+        List<Service> services = serviceMap.get(reservationId);
+
+        if (services == null) return 0;
+
+        double total = 0;
+        for (Service s : services) {
+            total += s.getCost();
+        }
+        return total;
     }
 }
 
-class RoomInventory {
-
-    private HashMap<String, Integer> inventory;
-
-    public RoomInventory() {
-        inventory = new HashMap<>();
-        inventory.put("Single Room", 5);
-        inventory.put("Double Room", 0);
-        inventory.put("Suite Room", 2);
-    }
-
-    public int getAvailability(String roomType) {
-        return inventory.get(roomType);
-    }
-}
-
-public class UseCase4RoomSearch {
-
+public class UseCase7AddOnServiceSelection {
     public static void main(String[] args) {
 
-        System.out.println("Book My Stay - Hotel Booking System v4.0");
-        System.out.println("----------------------------------------");
+        AddOnServiceManager manager = new AddOnServiceManager();
 
-        RoomInventory inventory = new RoomInventory();
+        String res1 = "S1";
+        String res2 = "D2";
 
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
+        Service wifi = new Service("WiFi", 200);
+        Service breakfast = new Service("Breakfast", 300);
+        Service spa = new Service("Spa", 1000);
 
-        if (inventory.getAvailability("Single Room") > 0) {
-            single.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Single Room"));
-            System.out.println();
-        }
+        manager.addService(res1, wifi);
+        manager.addService(res1, breakfast);
+        manager.addService(res2, spa);
 
-        if (inventory.getAvailability("Double Room") > 0) {
-            doubleRoom.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Double Room"));
-            System.out.println();
-        }
+        manager.viewServices(res1);
+        manager.viewServices(res2);
 
-        if (inventory.getAvailability("Suite Room") > 0) {
-            suite.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Suite Room"));
-            System.out.println();
-        }
+        System.out.println("\nTotal Add-On Cost for " + res1 + ": ₹" +
+                manager.calculateTotalCost(res1));
+
+        System.out.println("Total Add-On Cost for " + res2 + ": ₹" +
+                manager.calculateTotalCost(res2));
     }
 }
