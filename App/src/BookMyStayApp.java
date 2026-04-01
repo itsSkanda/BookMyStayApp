@@ -1,84 +1,85 @@
-import java.util.HashMap;
+import java.util.*;
 
-abstract class Room {
+class Reservation {
+    private String reservationId;
+    private String guestName;
+    private String roomType;
 
-    protected String roomType;
-    protected double price;
-
-    public Room(String roomType, double price) {
+    public Reservation(String reservationId, String guestName, String roomType) {
+        this.reservationId = reservationId;
+        this.guestName = guestName;
         this.roomType = roomType;
-        this.price = price;
     }
 
-    public void displayDetails() {
-        System.out.println("Room Type: " + roomType);
-        System.out.println("Price: ₹" + price);
+    public String getReservationId() {
+        return reservationId;
     }
-}
 
-class SingleRoom extends Room {
-    public SingleRoom() {
-        super("Single Room", 1500);
+    public String getGuestName() {
+        return guestName;
     }
-}
 
-class DoubleRoom extends Room {
-    public DoubleRoom() {
-        super("Double Room", 2500);
+    public String getRoomType() {
+        return roomType;
     }
-}
 
-class SuiteRoom extends Room {
-    public SuiteRoom() {
-        super("Suite Room", 5000);
+    @Override
+    public String toString() {
+        return "ID: " + reservationId + ", Guest: " + guestName + ", Room: " + roomType;
     }
 }
 
-class RoomInventory {
+class BookingHistory {
+    private List<Reservation> history;
 
-    private HashMap<String, Integer> inventory;
-
-    public RoomInventory() {
-        inventory = new HashMap<>();
-        inventory.put("Single Room", 5);
-        inventory.put("Double Room", 0);
-        inventory.put("Suite Room", 2);
+    public BookingHistory() {
+        history = new ArrayList<>();
     }
 
-    public int getAvailability(String roomType) {
-        return inventory.get(roomType);
+    public void addReservation(Reservation reservation) {
+        history.add(reservation);
+    }
+
+    public List<Reservation> getAllReservations() {
+        return history;
     }
 }
 
-public class UseCase4RoomSearch {
+class BookingReportService {
+    public void showAllBookings(List<Reservation> reservations) {
+        System.out.println("\nBooking History:");
+        for (Reservation r : reservations) {
+            System.out.println(r);
+        }
+    }
 
+    public void showSummary(List<Reservation> reservations) {
+        Map<String, Integer> summary = new HashMap<>();
+
+        for (Reservation r : reservations) {
+            summary.put(r.getRoomType(),
+                    summary.getOrDefault(r.getRoomType(), 0) + 1);
+        }
+
+        System.out.println("\nBooking Summary:");
+        for (String type : summary.keySet()) {
+            System.out.println(type + " -> " + summary.get(type));
+        }
+    }
+}
+
+public class UseCase8BookingHistoryReport {
     public static void main(String[] args) {
 
-        System.out.println("Book My Stay - Hotel Booking System v4.0");
-        System.out.println("----------------------------------------");
+        BookingHistory history = new BookingHistory();
+        BookingReportService reportService = new BookingReportService();
 
-        RoomInventory inventory = new RoomInventory();
+        history.addReservation(new Reservation("S1", "Arun", "Single"));
+        history.addReservation(new Reservation("D2", "Riya", "Double"));
+        history.addReservation(new Reservation("S2", "Karthik", "Single"));
+        history.addReservation(new Reservation("SU1", "Meena", "Suite"));
 
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
-
-        if (inventory.getAvailability("Single Room") > 0) {
-            single.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Single Room"));
-            System.out.println();
-        }
-
-        if (inventory.getAvailability("Double Room") > 0) {
-            doubleRoom.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Double Room"));
-            System.out.println();
-        }
-
-        if (inventory.getAvailability("Suite Room") > 0) {
-            suite.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Suite Room"));
-            System.out.println();
-        }
+        reportService.showAllBookings(history.getAllReservations());
+        reportService.showSummary(history.getAllReservations());
     }
 }
