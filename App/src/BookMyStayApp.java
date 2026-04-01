@@ -1,84 +1,105 @@
-import java.util.HashMap;
+import java.io.*;
+import java.util.*;
 
-abstract class Room {
+class Reservation implements Serializable {
+    private String reservationId;
+    private String guestName;
+    private String roomType;
 
-    protected String roomType;
-    protected double price;
-
-    public Room(String roomType, double price) {
+    public Reservation(String reservationId, String guestName, String roomType) {
+        this.reservationId = reservationId;
+        this.guestName = guestName;
         this.roomType = roomType;
-        this.price = price;
     }
 
-    public void displayDetails() {
-        System.out.println("Room Type: " + roomType);
-        System.out.println("Price: ₹" + price);
+    public String getReservationId() {
+        return reservationId;
     }
-}
 
-class SingleRoom extends Room {
-    public SingleRoom() {
-        super("Single Room", 1500);
+    public String getGuestName() {
+        return guestName;
     }
-}
 
-class DoubleRoom extends Room {
-    public DoubleRoom() {
-        super("Double Room", 2500);
+    public String getRoomType() {
+        return roomType;
     }
-}
 
-class SuiteRoom extends Room {
-    public SuiteRoom() {
-        super("Suite Room", 5000);
+    @Override
+    public String toString() {
+        return reservationId + " - " + guestName + " (" + roomType + ")";
     }
 }
 
-class RoomInventory {
+class SystemState implements Serializable {
+    Map<String, Integer> inventory;
+    List<Reservation> bookings;
 
-    private HashMap<String, Integer> inventory;
-
-    public RoomInventory() {
-        inventory = new HashMap<>();
-        inventory.put("Single Room", 5);
-        inventory.put("Double Room", 0);
-        inventory.put("Suite Room", 2);
-    }
-
-    public int getAvailability(String roomType) {
-        return inventory.get(roomType);
+    public SystemState(Map<String, Integer> inventory, List<Reservation> bookings) {
+        this.inventory = inventory;
+        this.bookings = bookings;
     }
 }
 
-public class UseCase4RoomSearch {
+class PersistenceService {
+    private static final String FILE_NAME = "system_state.dat";
 
+    public void save(SystemState state) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(FILE_NAME))) {
+            oos.writeObject(state);
+            System.out.println("State saved successfully.");
+        } catch (IOException e) {
+            System.out.println("Error saving state.");
+        }
+    }
+
+    public SystemState load() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(FILE_NAME))) {
+            SystemState state = (SystemState) ois.readObject();
+            System.out.println("State loaded successfully.");
+            return state;
+        } catch (Exception e) {
+            System.out.println("No valid saved state found. Starting fresh.");
+            return null;
+        }
+    }
+}
+
+public class UseCase12DataPersistenceRecovery {
     public static void main(String[] args) {
 
-        System.out.println("Book My Stay - Hotel Booking System v4.0");
-        System.out.println("----------------------------------------");
+        PersistenceService persistence = new PersistenceService();
 
-        RoomInventory inventory = new RoomInventory();
+        SystemState state = persistence.load();
 
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
+        Map<String, Integer> inventory;
+        List<Reservation> bookings;
 
-        if (inventory.getAvailability("Single Room") > 0) {
-            single.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Single Room"));
-            System.out.println();
+        if (state != null) {
+            inventory = state.inventory;
+            bookings = state.bookings;
+        } else {
+            inventory = new HashMap<>();
+            inventory.put("Single", 2);
+            inventory.put("Double", 1);
+
+            bookings = new ArrayList<>();
+            bookings.add(new Reservation("S1", "Arun", "Single"));
+            bookings.add(new Reservation("D1", "Riya", "Double"));
         }
 
-        if (inventory.getAvailability("Double Room") > 0) {
-            doubleRoom.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Double Room"));
-            System.out.println();
+        System.out.println("\nCurrent Inventory:");
+        for (String type : inventory.keySet()) {
+            System.out.println(type + " -> " + inventory.get(type));
         }
 
-        if (inventory.getAvailability("Suite Room") > 0) {
-            suite.displayDetails();
-            System.out.println("Available: " + inventory.getAvailability("Suite Room"));
-            System.out.println();
+        System.out.println("\nBookings:");
+        for (Reservation r : bookings) {
+            System.out.println(r);
         }
+
+        inventory.put("Single", inventory.get("Single") - 1);
+        bookings.add(new Reservation("S2", "Karthik", "Single"));
+
+        persistence.save(new SystemState(inventory, bookings));
     }
 }
